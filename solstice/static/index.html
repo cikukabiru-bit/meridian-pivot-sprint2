@@ -32,22 +32,35 @@
     padding: 22px 28px;
   }
   header h1 { margin: 0; font-size: 20px; letter-spacing: .3px; }
-  main { max-width: 860px; margin: 0 auto; padding: 28px; }
+  main { max-width: 960px; margin: 0 auto; padding: 28px; }
   .bar {
     display: flex; justify-content: flex-end; align-items: center;
     margin-bottom: 18px; gap: 12px; flex-wrap: wrap;
   }
-  .card {
+
+  .table-wrap {
     background: #fff; border: 1px solid var(--line); border-radius: 8px;
-    padding: 16px 18px; margin-bottom: 12px;
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    flex-wrap: wrap;
+    overflow-x: auto;
   }
-  .who { flex: 1 1 240px; }
-  .who strong { display: block; font-size: 16px; }
-  .who span { font-size: 13px; color: var(--muted); display: block; }
-  .right { display: flex; align-items: center; gap: 14px; }
+  table { width: 100%; border-collapse: collapse; min-width: 680px; }
+  thead th {
+    text-align: left; font-size: 12px; text-transform: uppercase;
+    letter-spacing: .6px; color: var(--muted); font-weight: bold;
+    padding: 13px 18px; border-bottom: 1px solid var(--line);
+    background: #fafbfd; white-space: nowrap;
+  }
+  tbody td {
+    padding: 14px 18px; border-bottom: 1px solid #eef2f7;
+    font-size: 14px; vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: #fbfcfe; }
+  td.name { font-weight: bold; }
+  td.code { font-family: Consolas, monospace; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  td.action { text-align: right; }
+
   .status {
+    display: inline-block;
     font-size: 13px; padding: 5px 11px; border-radius: 20px;
     border: 1px solid var(--line); background: #f7f9fc; color: var(--muted);
     white-space: nowrap;
@@ -55,21 +68,24 @@
   .status.printing { background: var(--amber-bg); color: var(--amber); border-color: #f0dcb4; }
   .status.checked_in { background: var(--green-bg); color: var(--green); border-color: #bfe3ce; }
   .status.failed { background: var(--red-bg); color: var(--red); border-color: #f0cbc8; }
+  .job { display: block; font-size: 11px; color: var(--muted); margin-top: 5px; font-family: Consolas, monospace; }
   .dot {
     display: inline-block; width: 7px; height: 7px; border-radius: 50%;
     background: var(--amber); margin-right: 7px;
     animation: pulse 1s ease-in-out infinite;
   }
   @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+
   button {
-    font-family: inherit; font-size: 14px; padding: 10px 18px;
+    font-family: inherit; font-size: 14px; padding: 9px 17px;
     border-radius: 6px; border: 0; cursor: pointer;
-    background: var(--navy-soft); color: #fff;
+    background: var(--navy-soft); color: #fff; white-space: nowrap;
   }
   button:hover:enabled { background: var(--navy); }
   button:disabled { background: #c3ccd8; cursor: not-allowed; }
   button.ghost { background: #fff; color: var(--navy-soft); border: 1px solid var(--line); }
   button.ghost:hover { background: #f4f6f9; }
+
   #log {
     margin-top: 22px; background: #fff; border: 1px solid var(--line);
     border-radius: 8px; padding: 14px 18px; font-size: 13px;
@@ -79,7 +95,6 @@
   #log div:last-child { border-bottom: 0; }
   #log .blocked { color: var(--red); }
   #log .done { color: var(--green); }
-  .job { font-size: 12px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -93,7 +108,20 @@
     <button class="ghost" onclick="resetAll()">Reset demo</button>
   </div>
 
-  <div id="attendees"></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Att Code</th>
+          <th>Event</th>
+          <th>Job Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="attendees"></tbody>
+    </table>
+  </div>
 
   <div id="log"><div>Kiosk ready.</div></div>
 </main>
@@ -132,27 +160,27 @@ function noteChanges(list) {
 }
 
 function draw(list) {
-  const box = document.getElementById("attendees");
-  box.innerHTML = "";
+  const body = document.getElementById("attendees");
+  body.innerHTML = "";
   list.forEach(a => {
     const locked = a.status === "printing" || a.status === "checked_in";
     const label = a.status === "printing"
       ? `<span class="dot"></span>${STATUS_TEXT.printing}`
       : STATUS_TEXT[a.status];
 
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <div class="who">
-        <strong>${a.name}</strong>
-        <span>${a.attendee_id} &middot; ${a.ticket}</span>
-        ${a.job_id ? `<span class="job">Print job ${a.job_id}</span>` : ""}
-      </div>
-      <div class="right">
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td class="name">${a.name}</td>
+      <td class="code">${a.attendee_id}</td>
+      <td>${a.ticket}</td>
+      <td>
         <span class="status ${a.status}">${label}</span>
+        ${a.job_id ? `<span class="job">${a.job_id}</span>` : ""}
+      </td>
+      <td class="action">
         <button ${locked ? "disabled" : ""} onclick="scan('${a.attendee_id}')">Scan QR</button>
-      </div>`;
-    box.appendChild(card);
+      </td>`;
+    body.appendChild(row);
   });
 }
 
