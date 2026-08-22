@@ -9,3 +9,6 @@ err.log
 *.log
 *.db
 *.sqlite3
+
+# Assignment 3 - confidential, submitted directly to the instructor
+ADAPTABILITY_INDEX.md
