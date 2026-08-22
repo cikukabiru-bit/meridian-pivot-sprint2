@@ -6,18 +6,20 @@
 <title>Solstice Events Co. Check-In</title>
 <style>
   :root {
-    --navy: #0f2340;
-    --navy-soft: #1b3a63;
-    --ink: #12263f;
-    --muted: #6b7c93;
-    --line: #dde4ed;
-    --green: #1a7f4b;
+    --brand: #9a3d0b;        /* deep orange - header */
+    --brand-soft: #c2500f;   /* orange - buttons */
+    --ink: #2b2018;
+    --muted: #8a7a6d;
+    --line: #ece3db;
+    --green: #1a7f4b;        /* checked in */
     --green-bg: #e7f5ed;
-    --amber: #8a5b00;
+    --amber: #8a5b00;        /* not checked in */
     --amber-bg: #fdf3e0;
-    --red: #a8322d;
+    --blue: #1d4ed8;         /* printing - in progress */
+    --blue-bg: #e9effd;
+    --red: #a8322d;          /* print failed */
     --red-bg: #fbeceb;
-    --page: #f4f6f9;
+    --page: #faf7f4;
   }
   * { box-sizing: border-box; }
   body {
@@ -27,7 +29,7 @@
     color: var(--ink);
   }
   header {
-    background: var(--navy);
+    background: var(--brand);
     color: #fff;
     padding: 22px 28px;
   }
@@ -65,13 +67,14 @@
     border: 1px solid var(--line); background: #f7f9fc; color: var(--muted);
     white-space: nowrap;
   }
-  .status.printing { background: var(--amber-bg); color: var(--amber); border-color: #f0dcb4; }
+  .status.not_checked_in { background: var(--amber-bg); color: var(--amber); border-color: #f0dcb4; }
+  .status.printing { background: var(--blue-bg); color: var(--blue); border-color: #c5d4f7; }
   .status.checked_in { background: var(--green-bg); color: var(--green); border-color: #bfe3ce; }
   .status.failed { background: var(--red-bg); color: var(--red); border-color: #f0cbc8; }
   .job { display: block; font-size: 11px; color: var(--muted); margin-top: 5px; font-family: Consolas, monospace; }
   .dot {
     display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-    background: var(--amber); margin-right: 7px;
+    background: var(--blue); margin-right: 7px;
     animation: pulse 1s ease-in-out infinite;
   }
   @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
@@ -79,12 +82,12 @@
   button {
     font-family: inherit; font-size: 14px; padding: 9px 17px;
     border-radius: 6px; border: 0; cursor: pointer;
-    background: var(--navy-soft); color: #fff; white-space: nowrap;
+    background: var(--brand-soft); color: #fff; white-space: nowrap;
   }
-  button:hover:enabled { background: var(--navy); }
-  button:disabled { background: #c3ccd8; cursor: not-allowed; }
-  button.ghost { background: #fff; color: var(--navy-soft); border: 1px solid var(--line); }
-  button.ghost:hover { background: #f4f6f9; }
+  button:hover:enabled { background: var(--brand); }
+  button:disabled { background: #d8cec6; cursor: not-allowed; }
+  button.ghost { background: #fff; color: var(--brand-soft); border: 1px solid var(--line); }
+  button.ghost:hover { background: #fdf6f1; }
 
   #log {
     margin-top: 22px; background: #fff; border: 1px solid var(--line);
