@@ -5,3 +5,7 @@ __pycache__/
 
 out.log
 err.log
+
+*.log
+*.db
+*.sqlite3

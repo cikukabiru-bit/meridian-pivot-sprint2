@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solstice Events - Check-In Kiosk</title>
+<style>
+  :root {
+    --navy: #0f2340;
+    --navy-soft: #1b3a63;
+    --ink: #12263f;
+    --muted: #6b7c93;
+    --line: #dde4ed;
+    --green: #1a7f4b;
+    --green-bg: #e7f5ed;
+    --red: #a8322d;
+    --red-bg: #fbeceb;
+    --page: #f4f6f9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--page);
+    color: var(--ink);
+  }
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 22px 28px;
+  }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: .3px; }
+  header p { margin: 6px 0 0; font-size: 13px; color: #b9c8dc; }
+  main { max-width: 860px; margin: 0 auto; padding: 28px; }
+  .bar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 18px; gap: 12px; flex-wrap: wrap;
+  }
+  .bar h2 { font-size: 15px; margin: 0; color: var(--muted); font-weight: normal; }
+  .card {
+    background: #fff; border: 1px solid var(--line); border-radius: 8px;
+    padding: 16px 18px; margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    flex-wrap: wrap;
+  }
+  .who { flex: 1 1 240px; }
+  .who strong { display: block; font-size: 16px; }
+  .who span { font-size: 13px; color: var(--muted); }
+  .right { display: flex; align-items: center; gap: 14px; }
+  .status {
+    font-size: 13px; padding: 5px 11px; border-radius: 20px;
+    border: 1px solid var(--line); background: #f7f9fc; color: var(--muted);
+    white-space: nowrap;
+  }
+  .status.checked_in { background: var(--green-bg); color: var(--green); border-color: #bfe3ce; }
+  .status.failed { background: var(--red-bg); color: var(--red); border-color: #f0cbc8; }
+  button {
+    font-family: inherit; font-size: 14px; padding: 10px 18px;
+    border-radius: 6px; border: 0; cursor: pointer;
+    background: var(--navy-soft); color: #fff;
+  }
+  button:hover { background: var(--navy); }
+  button:disabled { background: #c3ccd8; cursor: not-allowed; }
+  button.ghost { background: #fff; color: var(--navy-soft); border: 1px solid var(--line); }
+  #log {
+    margin-top: 22px; background: #fff; border: 1px solid var(--line);
+    border-radius: 8px; padding: 14px 18px; font-size: 13px;
+    max-height: 220px; overflow-y: auto;
+  }
+  #log div { padding: 3px 0; border-bottom: 1px solid #f0f3f7; }
+  #log div:last-child { border-bottom: 0; }
+  .job { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Solstice Events Co. &mdash; Check-In Kiosk</h1>
+  <p>Scan an attendee's QR code to print their badge.</p>
+</header>
+
+<main>
+  <div class="bar">
+    <h2>Synchronous printing &mdash; the kiosk waits for the printer before confirming.</h2>
+    <button class="ghost" onclick="resetAll()">Reset demo</button>
+  </div>
+
+  <div id="attendees"></div>
+
+  <div id="log"><div>Kiosk ready.</div></div>
+</main>
+
+<script>
+const STATUS_TEXT = {
+  not_checked_in: "Not checked in",
+  checked_in: "Checked In",
+  failed: "Print failed"
+};
+
+let busy = new Set();
+
+async function load() {
+  const res = await fetch("/api/attendees");
+  const data = await res.json();
+  draw(data.attendees);
+}
+
+function draw(list) {
+  const box = document.getElementById("attendees");
+  box.innerHTML = "";
+  list.forEach(a => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const isBusy = busy.has(a.attendee_id);
+    const done = a.status === "checked_in";
+
+    card.innerHTML = `
+      <div class="who">
+        <strong>${a.name}</strong>
+        <span>${a.attendee_id} &middot; ${a.ticket}</span>
+        ${a.job_id ? `<span class="job">Print job ${a.job_id}</span>` : ""}
+      </div>
+      <div class="right">
+        <span class="status ${a.status}">${isBusy ? "Contacting printer&hellip;" : STATUS_TEXT[a.status]}</span>
+        <button ${isBusy ? "disabled" : ""} onclick="scan('${a.attendee_id}')">Scan QR</button>
+      </div>`;
+    box.appendChild(card);
+  });
+}
+
+async function scan(attendeeId) {
+  busy.add(attendeeId);
+  await load();
+  log(`Scanned ${attendeeId} - waiting for the printer...`);
+
+  try {
+    const res = await fetch("/api/checkin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ attendee_id: attendeeId })
+    });
+    const data = await res.json();
+
+    if (res.status === 409) log(`DUPLICATE SCAN BLOCKED - ${data.message}`);
+    else if (res.ok) log(`${attendeeId} checked in. Badge printed (${data.attendee.job_id}).`);
+    else log(`${attendeeId} FAILED - ${data.attendee ? data.attendee.message : data.error}`);
+  } catch (err) {
+    log(`${attendeeId} ERROR - ${err.message}`);
+  } finally {
+    busy.delete(attendeeId);
+    await load();
+  }
+}
+
+async function resetAll() {
+  await fetch("/api/reset", { method: "POST" });
+  log("Demo reset - all attendees are not checked in.");
+  await load();
+}
+
+function log(message) {
+  const box = document.getElementById("log");
+  const line = document.createElement("div");
+  const now = new Date().toLocaleTimeString();
+  line.textContent = `${now}  ${message}`;
+  box.prepend(line);
+}
+
+load();
+</script>
+
+</body>
+</html>
