@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Solstice Events - Check-In Kiosk</title>
+<title>Solstice Events Co. Check-In</title>
 <style>
   :root {
     --navy: #0f2340;
@@ -13,6 +13,8 @@
     --line: #dde4ed;
     --green: #1a7f4b;
     --green-bg: #e7f5ed;
+    --amber: #8a5b00;
+    --amber-bg: #fdf3e0;
     --red: #a8322d;
     --red-bg: #fbeceb;
     --page: #f4f6f9;
@@ -30,7 +32,6 @@
     padding: 22px 28px;
   }
   header h1 { margin: 0; font-size: 20px; letter-spacing: .3px; }
-  header p { margin: 6px 0 0; font-size: 13px; color: #b9c8dc; }
   main { max-width: 860px; margin: 0 auto; padding: 28px; }
   .bar {
     display: flex; justify-content: flex-end; align-items: center;
@@ -44,23 +45,31 @@
   }
   .who { flex: 1 1 240px; }
   .who strong { display: block; font-size: 16px; }
-  .who span { font-size: 13px; color: var(--muted); }
+  .who span { font-size: 13px; color: var(--muted); display: block; }
   .right { display: flex; align-items: center; gap: 14px; }
   .status {
     font-size: 13px; padding: 5px 11px; border-radius: 20px;
     border: 1px solid var(--line); background: #f7f9fc; color: var(--muted);
     white-space: nowrap;
   }
+  .status.printing { background: var(--amber-bg); color: var(--amber); border-color: #f0dcb4; }
   .status.checked_in { background: var(--green-bg); color: var(--green); border-color: #bfe3ce; }
   .status.failed { background: var(--red-bg); color: var(--red); border-color: #f0cbc8; }
+  .dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--amber); margin-right: 7px;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
   button {
     font-family: inherit; font-size: 14px; padding: 10px 18px;
     border-radius: 6px; border: 0; cursor: pointer;
     background: var(--navy-soft); color: #fff;
   }
-  button:hover { background: var(--navy); }
+  button:hover:enabled { background: var(--navy); }
   button:disabled { background: #c3ccd8; cursor: not-allowed; }
   button.ghost { background: #fff; color: var(--navy-soft); border: 1px solid var(--line); }
+  button.ghost:hover { background: #f4f6f9; }
   #log {
     margin-top: 22px; background: #fff; border: 1px solid var(--line);
     border-radius: 8px; padding: 14px 18px; font-size: 13px;
@@ -68,6 +77,8 @@
   }
   #log div { padding: 3px 0; border-bottom: 1px solid #f0f3f7; }
   #log div:last-child { border-bottom: 0; }
+  #log .blocked { color: var(--red); }
+  #log .done { color: var(--green); }
   .job { font-size: 12px; color: var(--muted); }
 </style>
 </head>
@@ -90,28 +101,47 @@
 <script>
 const STATUS_TEXT = {
   not_checked_in: "Not checked in",
+  printing: "Printing badge&hellip;",
   checked_in: "Checked In",
   failed: "Print failed"
 };
 
-let busy = new Set();
+// Remember what we last showed, so the log only reports real changes.
+let previous = {};
 
 async function load() {
-  const res = await fetch("/api/attendees");
-  const data = await res.json();
-  draw(data.attendees);
+  try {
+    const res = await fetch("/api/attendees");
+    const data = await res.json();
+    noteChanges(data.attendees);
+    draw(data.attendees);
+  } catch (err) {
+    // Kiosk keeps running even if one poll fails.
+  }
+}
+
+function noteChanges(list) {
+  list.forEach(a => {
+    const was = previous[a.attendee_id];
+    if (was && was !== a.status) {
+      if (a.status === "checked_in") log(`${a.name} confirmed by the printer - Checked In.`, "done");
+      if (a.status === "failed") log(`${a.name} - print failed: ${a.message}. Scan again to retry.`, "blocked");
+    }
+    previous[a.attendee_id] = a.status;
+  });
 }
 
 function draw(list) {
   const box = document.getElementById("attendees");
   box.innerHTML = "";
   list.forEach(a => {
+    const locked = a.status === "printing" || a.status === "checked_in";
+    const label = a.status === "printing"
+      ? `<span class="dot"></span>${STATUS_TEXT.printing}`
+      : STATUS_TEXT[a.status];
+
     const card = document.createElement("div");
     card.className = "card";
-
-    const isBusy = busy.has(a.attendee_id);
-    const done = a.status === "checked_in";
-
     card.innerHTML = `
       <div class="who">
         <strong>${a.name}</strong>
@@ -119,18 +149,14 @@ function draw(list) {
         ${a.job_id ? `<span class="job">Print job ${a.job_id}</span>` : ""}
       </div>
       <div class="right">
-        <span class="status ${a.status}">${isBusy ? "Contacting printer&hellip;" : STATUS_TEXT[a.status]}</span>
-        <button ${isBusy ? "disabled" : ""} onclick="scan('${a.attendee_id}')">Scan QR</button>
+        <span class="status ${a.status}">${label}</span>
+        <button ${locked ? "disabled" : ""} onclick="scan('${a.attendee_id}')">Scan QR</button>
       </div>`;
     box.appendChild(card);
   });
 }
 
 async function scan(attendeeId) {
-  busy.add(attendeeId);
-  await load();
-  log(`Scanned ${attendeeId} - waiting for the printer...`);
-
   try {
     const res = await fetch("/api/checkin", {
       method: "POST",
@@ -139,32 +165,34 @@ async function scan(attendeeId) {
     });
     const data = await res.json();
 
-    if (res.status === 409) log(`DUPLICATE SCAN BLOCKED - ${data.message}`);
-    else if (res.ok) log(`${attendeeId} checked in. Badge printed (${data.attendee.job_id}).`);
-    else log(`${attendeeId} FAILED - ${data.attendee ? data.attendee.message : data.error}`);
+    if (res.status === 409) log(`DUPLICATE SCAN BLOCKED - ${data.message}`, "blocked");
+    else if (res.status === 202) log(`${attendeeId} queued for printing (${data.job_id}). Waiting for the printer to confirm...`);
+    else log(`${attendeeId} - ${data.error || "unexpected response"}`, "blocked");
   } catch (err) {
-    log(`${attendeeId} ERROR - ${err.message}`);
-  } finally {
-    busy.delete(attendeeId);
-    await load();
+    log(`${attendeeId} ERROR - ${err.message}`, "blocked");
   }
+  await load();
 }
 
 async function resetAll() {
   await fetch("/api/reset", { method: "POST" });
+  previous = {};
   log("Demo reset - all attendees are not checked in.");
   await load();
 }
 
-function log(message) {
+function log(message, kind) {
   const box = document.getElementById("log");
   const line = document.createElement("div");
-  const now = new Date().toLocaleTimeString();
-  line.textContent = `${now}  ${message}`;
+  if (kind) line.className = kind;
+  line.textContent = `${new Date().toLocaleTimeString()}  ${message}`;
   box.prepend(line);
 }
 
+// The kiosk no longer learns the outcome from its own request, so it polls
+// for state the webhook has since changed.
 load();
+setInterval(load, 1000);
 </script>
 
 </body>

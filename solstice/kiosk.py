@@ -1,18 +1,26 @@
 """Solstice Events - check-in kiosk service.
 
-ORIGINAL SPEC (synchronous):
-  Staff scan an attendee's QR code -> we call the badge-printer vendor's
-  REST API and WAIT for it to report success -> only then do we mark the
-  attendee checked in and show "Checked In" on screen.
+PIVOTED SPEC (asynchronous):
+  Staff scan a QR code -> we PUBLISH a print request onto the vendor's
+  message queue and return immediately with "printing". The vendor's
+  worker prints the badge and then calls our webhook back. Only when that
+  signed confirmation arrives is the attendee shown as Checked In.
 
-  An attendee who is already checked in must not get a second badge.
+  Duplicate-scan protection holds under this model because an attendee is
+  claimed at publish time, not at confirmation time - see attendees.py.
+
+The synchronous call to the vendor's REST API has been removed entirely,
+along with printer_api.py. Nothing here waits on a printer any more.
 """
 
-import requests
+import json
+
 from flask import Flask, jsonify, request, send_from_directory
 
 import attendees
-from config import PRINTER_API_URL, PRINT_TIMEOUT_SECONDS
+from config import KIOSK_PORT, SIGNATURE_HEADER
+from print_queue import new_job_id, print_badge
+from signing import is_valid
 
 app = Flask(__name__, static_folder="static")
 
@@ -24,7 +32,8 @@ def kiosk_screen():
 
 @app.route("/api/attendees")
 def list_attendees():
-    """Everything the kiosk screen needs to draw itself."""
+    """Everything the kiosk screen needs to draw itself, including who is
+    mid-print. The screen polls this so pending states resolve on their own."""
     return jsonify({"attendees": attendees.snapshot()})
 
 
@@ -37,47 +46,68 @@ def checkin():
     if not attendees.exists(attendee_id):
         return jsonify({"error": "unknown attendee", "attendee_id": attendee_id}), 404
 
-    current = attendees.get(attendee_id)
+    job_id = new_job_id()
+    claimed, record = attendees.claim(attendee_id, job_id)
 
     # DUPLICATE-SCAN PROTECTION
-    # Already checked in means a badge has already been printed. Refuse,
-    # and do not touch the printer.
-    if current["status"] == "checked_in":
+    # Refused for anyone already checked in OR still printing. Nothing is
+    # published to the queue, so no second badge can ever be produced.
+    if not claimed:
+        already = "already checked in" if record["status"] == "checked_in" else "already being printed"
         return (
             jsonify(
                 {
-                    "result": "already_checked_in",
-                    "message": f"{current['name']} is already checked in - no second badge printed.",
-                    "attendee": current,
+                    "result": "duplicate_scan",
+                    "message": f"{record['name']} is {already} - no second badge queued.",
+                    "attendee": record,
                 }
             ),
             409,
         )
 
-    # ORIGINAL SPEC: call the printer and block until it answers.
+    # PIVOTED: publish to the vendor's queue and return at once. The kiosk
+    # never waits for the printer.
+    print_badge(job_id, attendee_id, record["name"])
+
+    return jsonify({"result": "printing", "job_id": job_id, "attendee": record}), 202
+
+
+@app.route("/webhook/print-complete", methods=["POST"])
+def print_complete():
+    """The vendor tells us a print job has finished.
+
+    This endpoint is open to the internet, so nothing here is trusted until
+    the signature proves the message came from the vendor and was not
+    altered in transit.
+    """
+    raw_body = request.get_data()
+    claimed_signature = request.headers.get(SIGNATURE_HEADER)
+
+    if not is_valid(raw_body, claimed_signature):
+        print("[kiosk] REJECTED callback - bad or missing signature", flush=True)
+        return jsonify({"error": "invalid signature"}), 401
+
     try:
-        response = requests.post(
-            PRINTER_API_URL,
-            json={"attendee_id": attendee_id, "name": current["name"]},
-            timeout=PRINT_TIMEOUT_SECONDS,
-        )
-        response.raise_for_status()
-        result = response.json()
-    except Exception as exc:
-        record = attendees.set_status(
-            attendee_id, "failed", message=f"Printer unreachable: {exc}"
-        )
-        return jsonify({"result": "print_failed", "attendee": record}), 502
+        message = json.loads(raw_body)
+    except ValueError:
+        return jsonify({"error": "malformed body"}), 400
 
-    if result.get("status") != "success":
-        record = attendees.set_status(
-            attendee_id, "failed", message="Printer reported failure"
-        )
-        return jsonify({"result": "print_failed", "attendee": record}), 502
+    job_id = message.get("job_id")
+    attendee_id = message.get("attendee_id")
+    succeeded = message.get("status") == "success"
 
-    # The badge is physically printed, so and only so is the attendee checked in.
-    record = attendees.set_status(attendee_id, "checked_in", job_id=result.get("job_id"))
-    return jsonify({"result": "checked_in", "attendee": record})
+    applied, record = attendees.confirm(
+        job_id, attendee_id, succeeded, message.get("reason", "")
+    )
+
+    if not applied:
+        # Stale, duplicate or out-of-order. Accepted so the vendor stops
+        # retrying, but deliberately ignored.
+        print(f"[kiosk] IGNORED callback {job_id} for {attendee_id} - not the current job", flush=True)
+        return jsonify({"result": "ignored", "reason": "stale or duplicate callback"}), 200
+
+    print(f"[kiosk] {attendee_id} -> {record['status']} via {job_id}", flush=True)
+    return jsonify({"result": record["status"], "attendee": record}), 200
 
 
 @app.route("/api/reset", methods=["POST"])
@@ -87,4 +117,4 @@ def reset():
 
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=False)
+    app.run(port=KIOSK_PORT, debug=False)
