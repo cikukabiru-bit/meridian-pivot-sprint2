@@ -33,10 +33,9 @@
   header p { margin: 6px 0 0; font-size: 13px; color: #b9c8dc; }
   main { max-width: 860px; margin: 0 auto; padding: 28px; }
   .bar {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex; justify-content: flex-end; align-items: center;
     margin-bottom: 18px; gap: 12px; flex-wrap: wrap;
   }
-  .bar h2 { font-size: 15px; margin: 0; color: var(--muted); font-weight: normal; }
   .card {
     background: #fff; border: 1px solid var(--line); border-radius: 8px;
     padding: 16px 18px; margin-bottom: 12px;
@@ -75,13 +74,11 @@
 <body>
 
 <header>
-  <h1>Solstice Events Co. &mdash; Check-In Kiosk</h1>
-  <p>Scan an attendee's QR code to print their badge.</p>
+  <h1>Solstice Events Co. Check-In</h1>
 </header>
 
 <main>
   <div class="bar">
-    <h2>Synchronous printing &mdash; the kiosk waits for the printer before confirming.</h2>
     <button class="ghost" onclick="resetAll()">Reset demo</button>
   </div>
 
