@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .env
+
+out.log
+err.log
