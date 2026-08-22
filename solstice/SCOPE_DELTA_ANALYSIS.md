@@ -125,6 +125,8 @@ still ended in the correct state.
 | Server-sent events instead of polling | Cosmetic and performance only; no requirement depends on it. |
 | Secret moved to environment variable | One-line change, deferred only because nothing in the demo depends on it. |
 | Real QR scanner input | The handout's scan action is simulated by a button; scanner integration is hardware work outside this sprint. |
+| Adding attendees from the kiosk UI | Identified as a genuine operational need — staff will have walk-ups. Requires the persistent register above to be built first, otherwise additions are lost on restart. Deferred as scope beyond the client's stated requirements, not as an oversight. |
+| A `declined` status for attendees not attending | Would need to block scanning like `checked_in` does, and to take precedence over a print confirmation arriving afterwards for a job already in flight. The existing `confirm()` job-id check already provides the mechanism. Deferred for the same reason. |
 
 ---
 
