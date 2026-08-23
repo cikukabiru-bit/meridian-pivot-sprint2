@@ -6,109 +6,253 @@
 <title>Solstice Events Co. Check-In</title>
 <style>
   :root {
-    --brand: #9a3d0b;        /* deep orange - header */
-    --brand-soft: #c2500f;   /* orange - buttons */
-    --ink: #2b2018;
-    --muted: #8a7a6d;
-    --line: #ece3db;
-    --green: #1a7f4b;        /* checked in */
-    --green-bg: #e7f5ed;
-    --amber: #8a5b00;        /* not checked in */
+    --page: #f7f4f1;
+    --card: #ffffff;
+    --line: #e7ded6;
+    --line-soft: #f0eae4;
+
+    --orange: #c2500f;
+    --orange-2: #ea6a1c;
+    --orange-deep: #9a3d0b;
+    --orange-tint: #fdf1e8;
+
+    --amber: #8a5b00;      /* not checked in */
     --amber-bg: #fdf3e0;
-    --blue: #1d4ed8;         /* printing - in progress */
+    --blue: #1d4ed8;       /* printing - in progress */
     --blue-bg: #e9effd;
-    --red: #a8322d;          /* print failed */
+    --green: #1a7f4b;      /* checked in */
+    --green-bg: #e7f5ed;
+    --red: #a8322d;        /* print failed */
     --red-bg: #fbeceb;
-    --page: #faf7f4;
+
+    --ink: #2c2019;
+    --muted: #8b7768;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
-    background: var(--page);
     color: var(--ink);
-  }
-  header {
-    background: var(--brand);
-    color: #fff;
-    padding: 22px 28px;
-  }
-  header h1 { margin: 0; font-size: 20px; letter-spacing: .3px; }
-  main { max-width: 960px; margin: 0 auto; padding: 28px; }
-  .bar {
-    display: flex; justify-content: flex-end; align-items: center;
-    margin-bottom: 18px; gap: 12px; flex-wrap: wrap;
+    background: var(--page);
   }
 
+  /* ---------- brand bar ---------- */
+  .topbar {
+    background: linear-gradient(135deg, var(--orange-2), var(--orange-deep));
+    color: #fff; padding: 20px 30px;
+  }
+  .topbar-inner {
+    max-width: 1040px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 20px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 13px; }
+  .mark {
+    width: 38px; height: 38px; flex: none; border-radius: 10px;
+    background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; font-weight: bold;
+  }
+  .brand-name { font-size: 17px; font-weight: bold; letter-spacing: 1.3px; text-transform: uppercase; }
+  .meta { font-size: 13px; text-align: right; line-height: 1.75; color: rgba(255,255,255,.9); }
+
+  main { max-width: 1040px; margin: 0 auto; padding: 30px; }
+  h1 { font-size: 34px; margin: 0 0 8px; letter-spacing: -.5px; }
+  .lede { color: var(--muted); font-size: 14px; margin: 0 0 22px; }
+
+  /* ---------- session strip ---------- */
+  .session {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    border: 1px solid var(--line); border-radius: 12px;
+    background: var(--card); padding: 14px 16px; margin-bottom: 20px;
+  }
+  .session .icon {
+    width: 34px; height: 34px; border-radius: 9px; flex: none;
+    background: var(--orange-tint); border: 1px solid #f2d9c5;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: var(--orange);
+  }
+  .session .what { flex: 1 1 200px; }
+  .session .what strong { display: block; font-size: 15px; }
+  .session .what span { font-size: 12.5px; color: var(--muted); }
+
+  /* ---------- panels ---------- */
+  .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  @media (max-width: 760px) { .panels { grid-template-columns: 1fr; } }
+  .panel {
+    border: 1px solid var(--line); border-radius: 14px;
+    background: var(--card); padding: 20px;
+    display: flex; flex-direction: column;
+  }
+  .panel h2 {
+    font-size: 12px; letter-spacing: 1.3px; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 14px; font-weight: bold;
+  }
+  .panel .filler { flex: 1; }
+  .field {
+    width: 100%; padding: 13px 15px; font-family: Consolas, monospace; font-size: 15px;
+    border-radius: 10px; border: 1px solid var(--line);
+    background: #fdfbf9; color: var(--ink); margin-bottom: 11px;
+  }
+  .field:focus { outline: none; border-color: var(--orange-2); }
+  .field::placeholder { color: #b7a394; }
+
+  /* ---------- buttons ---------- */
+  button {
+    font-family: inherit; font-size: 14px; font-weight: bold;
+    padding: 12px 20px; border-radius: 10px; border: 0; cursor: pointer;
+    background: linear-gradient(135deg, var(--orange-2), var(--orange-deep));
+    color: #fff; white-space: nowrap;
+  }
+  button:hover:enabled { filter: brightness(1.08); }
+  button:disabled { background: #ded4cb; color: #9c8d81; cursor: not-allowed; }
+  button.wide { width: 100%; }
+  button.ghost {
+    background: #fff; color: var(--orange); border: 1px solid var(--line); font-weight: normal;
+  }
+  button.ghost:hover { background: var(--orange-tint); }
+  button.small { padding: 9px 15px; font-size: 13px; }
+
+  /* ---------- roster ---------- */
+  .roster-head { margin-bottom: 12px; }
+  .roster-head h2 {
+    font-size: 12px; letter-spacing: 1.3px; text-transform: uppercase;
+    color: var(--muted); margin: 0; font-weight: bold;
+  }
   .table-wrap {
-    background: #fff; border: 1px solid var(--line); border-radius: 8px;
-    overflow-x: auto;
+    border: 1px solid var(--line); border-radius: 14px;
+    background: var(--card); overflow-x: auto;
   }
-  table { width: 100%; border-collapse: collapse; min-width: 680px; }
+  table { width: 100%; border-collapse: collapse; min-width: 660px; }
   thead th {
-    text-align: left; font-size: 12px; text-transform: uppercase;
-    letter-spacing: .6px; color: var(--muted); font-weight: bold;
-    padding: 13px 18px; border-bottom: 1px solid var(--line);
-    background: #fafbfd; white-space: nowrap;
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1.1px;
+    color: var(--muted); font-weight: bold; padding: 14px 18px;
+    border-bottom: 1px solid var(--line); background: #fdfbf9; white-space: nowrap;
   }
-  tbody td {
-    padding: 14px 18px; border-bottom: 1px solid #eef2f7;
-    font-size: 14px; vertical-align: middle;
-  }
+  tbody td { padding: 15px 18px; border-bottom: 1px solid var(--line-soft); font-size: 14px; }
   tbody tr:last-child td { border-bottom: 0; }
-  tbody tr:hover { background: #fbfcfe; }
+  tbody tr:hover { background: #fdf8f4; }
   td.name { font-weight: bold; }
   td.code { font-family: Consolas, monospace; font-size: 13px; color: var(--muted); white-space: nowrap; }
   td.action { text-align: right; }
 
   .status {
-    display: inline-block;
-    font-size: 13px; padding: 5px 11px; border-radius: 20px;
-    border: 1px solid var(--line); background: #f7f9fc; color: var(--muted);
-    white-space: nowrap;
+    display: inline-block; font-size: 12.5px; padding: 6px 12px; border-radius: 20px;
+    border: 1px solid var(--line); background: #faf7f4; color: var(--muted); white-space: nowrap;
   }
-  .status.not_checked_in { background: var(--amber-bg); color: var(--amber); border-color: #f0dcb4; }
-  .status.printing { background: var(--blue-bg); color: var(--blue); border-color: #c5d4f7; }
-  .status.checked_in { background: var(--green-bg); color: var(--green); border-color: #bfe3ce; }
-  .status.failed { background: var(--red-bg); color: var(--red); border-color: #f0cbc8; }
-  .job { display: block; font-size: 11px; color: var(--muted); margin-top: 5px; font-family: Consolas, monospace; }
+  .status.not_checked_in { color: var(--amber); background: var(--amber-bg); border-color: #f0dcb4; }
+  .status.printing      { color: var(--blue);  background: var(--blue-bg);  border-color: #c5d4f7; }
+  .status.checked_in    { color: var(--green); background: var(--green-bg); border-color: #bfe3ce; }
+  .status.failed        { color: var(--red);   background: var(--red-bg);   border-color: #f0cbc8; }
+  .job { display: block; font-size: 11px; color: #a4917f; margin-top: 6px; font-family: Consolas, monospace; }
   .dot {
     display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-    background: var(--blue); margin-right: 7px;
+    background: var(--blue); margin-right: 8px;
     animation: pulse 1s ease-in-out infinite;
   }
-  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .2 } }
 
-  button {
-    font-family: inherit; font-size: 14px; padding: 9px 17px;
-    border-radius: 6px; border: 0; cursor: pointer;
-    background: var(--brand-soft); color: #fff; white-space: nowrap;
-  }
-  button:hover:enabled { background: var(--brand); }
-  button:disabled { background: #d8cec6; cursor: not-allowed; }
-  button.ghost { background: #fff; color: var(--brand-soft); border: 1px solid var(--line); }
-  button.ghost:hover { background: #fdf6f1; }
-
+  /* ---------- activity log ---------- */
   #log {
-    margin-top: 22px; background: #fff; border: 1px solid var(--line);
-    border-radius: 8px; padding: 14px 18px; font-size: 13px;
-    max-height: 220px; overflow-y: auto;
+    margin-top: 18px; border: 1px solid var(--line); border-radius: 14px;
+    background: var(--card); padding: 15px 18px; font-size: 13px;
+    max-height: 190px; overflow-y: auto; color: var(--muted);
   }
-  #log div { padding: 3px 0; border-bottom: 1px solid #f0f3f7; }
+  #log div { padding: 5px 0; border-bottom: 1px solid var(--line-soft); }
   #log div:last-child { border-bottom: 0; }
   #log .blocked { color: var(--red); }
   #log .done { color: var(--green); }
+  #log .pending { color: var(--blue); }
+
+  /* ---------- result overlay ---------- */
+  #overlay {
+    position: fixed; inset: 0; z-index: 50; display: none;
+    align-items: center; justify-content: center; padding: 24px;
+    background: rgba(44,32,25,.55);
+  }
+  #overlay.on { display: flex; }
+  .result {
+    width: 100%; max-width: 430px; text-align: center;
+    border: 1px solid var(--line); border-radius: 20px;
+    background: var(--card); padding: 40px 34px 32px;
+    box-shadow: 0 26px 60px rgba(70,45,25,.28);
+  }
+  .ring {
+    width: 90px; height: 90px; margin: 0 auto 22px; border-radius: 50%;
+    border: 3px solid var(--blue); background: var(--blue-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; line-height: 1; color: var(--blue);
+  }
+  .result.is-printing .ring { animation: breathe 1.3s ease-in-out infinite; }
+  .result.is-checked_in .ring { border-color: var(--green); color: var(--green); background: var(--green-bg); }
+  .result.is-failed .ring { border-color: var(--red); color: var(--red); background: var(--red-bg); }
+  .result.is-duplicate .ring { border-color: var(--amber); color: var(--amber); background: var(--amber-bg); }
+  @keyframes breathe {
+    0%,100% { box-shadow: 0 0 0 rgba(29,78,216,0); transform: scale(1); }
+    50% { box-shadow: 0 0 0 12px rgba(29,78,216,.10); transform: scale(1.04); }
+  }
+  .result .tag {
+    font-size: 12px; letter-spacing: 2.2px; text-transform: uppercase;
+    font-weight: bold; margin-bottom: 12px; color: var(--blue);
+  }
+  .result.is-checked_in .tag { color: var(--green); }
+  .result.is-failed .tag { color: var(--red); }
+  .result.is-duplicate .tag { color: var(--amber); }
+  .result .who { font-size: 26px; font-weight: bold; margin-bottom: 10px; letter-spacing: -.3px; }
+  .result .said { color: var(--muted); font-size: 14px; line-height: 1.65; margin-bottom: 20px; }
+  .result .jobref { font-family: Consolas, monospace; font-size: 11.5px; color: #a4917f; margin-bottom: 20px; }
+  .ticket {
+    display: inline-block; padding: 9px 20px; border-radius: 8px;
+    border: 1px dashed #e2b58e; color: var(--orange); background: var(--orange-tint);
+    font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 20px;
+  }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Solstice Events Co. Check-In</h1>
-</header>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="mark">S</div>
+      <div class="brand-name">Solstice Events Co.</div>
+    </div>
+    <div class="meta">
+      <div>Nov 20&ndash;22, 2026</div>
+      <div>Main Auditorium, Nairobi</div>
+    </div>
+  </div>
+</div>
 
 <main>
-  <div class="bar">
-    <button class="ghost" onclick="resetAll()">Reset demo</button>
+  <h1>Session Check-In</h1>
+  <p class="lede">Check an attendee in to print their badge.</p>
+
+  <div class="session">
+    <div class="icon">&#9679;</div>
+    <div class="what">
+      <strong>Keynote</strong>
+      <span>10:00 AM &ndash; 11:30 AM &middot; Main Auditorium</span>
+    </div>
+    <button class="ghost small" onclick="resetAll()">Reset demo</button>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <h2>Check in with QR code</h2>
+      <div class="filler"></div>
+      <button class="wide" onclick="document.getElementById('roster').scrollIntoView({behavior:'smooth'})">Go to roster</button>
+    </div>
+
+    <div class="panel">
+      <h2>Check in with search</h2>
+      <input class="field" id="ticket" placeholder="Attendee ID (e.g. ATT-1001)"
+             onkeydown="if(event.key==='Enter') checkInByTicket()">
+      <button class="wide" onclick="checkInByTicket()">Check In</button>
+    </div>
+  </div>
+
+  <div class="roster-head" id="roster">
+    <h2>Attendee roster</h2>
   </div>
 
   <div class="table-wrap">
@@ -129,6 +273,10 @@
   <div id="log"><div>Kiosk ready.</div></div>
 </main>
 
+<div id="overlay" onclick="hideResult()">
+  <div class="result" id="result"></div>
+</div>
+
 <script>
 const STATUS_TEXT = {
   not_checked_in: "Not checked in",
@@ -137,17 +285,23 @@ const STATUS_TEXT = {
   failed: "Print failed"
 };
 
-// Remember what we last showed, so the log only reports real changes.
-let previous = {};
+let previous = {};      // last seen status per attendee
+let watching = null;    // attendee currently shown in the overlay
+let dismissTimer = null;
 
 async function load() {
   try {
     const res = await fetch("/api/attendees");
     const data = await res.json();
+    const byId = {};
+    data.attendees.forEach(a => byId[a.attendee_id] = a);
     noteChanges(data.attendees);
     draw(data.attendees);
+    // The outcome arrives at the server's webhook, not in our own response,
+    // so the overlay is driven by polled state rather than by the click.
+    if (watching && byId[watching]) followUp(byId[watching]);
   } catch (err) {
-    // Kiosk keeps running even if one poll fails.
+    /* kiosk keeps running even if one poll fails */
   }
 }
 
@@ -187,6 +341,14 @@ function draw(list) {
   });
 }
 
+async function checkInByTicket() {
+  const box = document.getElementById("ticket");
+  const id = box.value.trim().toUpperCase();
+  if (!id) { log("Enter an attendee ID first.", "blocked"); return; }
+  box.value = "";
+  await scan(id);
+}
+
 async function scan(attendeeId) {
   try {
     const res = await fetch("/api/checkin", {
@@ -196,18 +358,69 @@ async function scan(attendeeId) {
     });
     const data = await res.json();
 
-    if (res.status === 409) log(`DUPLICATE SCAN BLOCKED - ${data.message}`, "blocked");
-    else if (res.status === 202) log(`${attendeeId} queued for printing (${data.job_id}). Waiting for the printer to confirm...`);
-    else log(`${attendeeId} - ${data.error || "unexpected response"}`, "blocked");
+    if (res.status === 409) {
+      log(`DUPLICATE SCAN BLOCKED - ${data.message}`, "blocked");
+      showResult("duplicate", data.attendee, data.message);
+    } else if (res.status === 202) {
+      log(`${attendeeId} queued for printing (${data.job_id}). Waiting for the printer to confirm...`, "pending");
+      watching = attendeeId;
+      showResult("printing", data.attendee);
+    } else {
+      log(`${attendeeId} - ${data.error || "unexpected response"}`, "blocked");
+      showResult("failed", { name: attendeeId, job_id: null }, data.error || "Attendee not recognised");
+    }
   } catch (err) {
     log(`${attendeeId} ERROR - ${err.message}`, "blocked");
   }
   await load();
 }
 
+/* The overlay follows the attendee we are watching until the webhook settles it. */
+function followUp(a) {
+  if (a.status === "printing") return;
+  if (a.status === "checked_in") showResult("checked_in", a);
+  else if (a.status === "failed") showResult("failed", a, a.message);
+  watching = null;
+}
+
+function showResult(kind, a, message) {
+  clearTimeout(dismissTimer);
+  const box = document.getElementById("result");
+  const name = (a.name || "").toUpperCase();
+
+  const parts = {
+    printing:   { icon: "&#9679;", tag: "Printing", said: "The print request is on the vendor's queue. Waiting for the printer to confirm before check-in is complete.", extra: "" },
+    checked_in: { icon: "&#10003;", tag: "Success", said: "Your badge is ready. Collect it from the printer.", extra: '<div class="ticket">Badge printed</div>' },
+    failed:     { icon: "&#10005;", tag: "Print failed", said: message || "The badge did not print. Please scan again.", extra: "" },
+    duplicate:  { icon: "!",        tag: "Already checked in", said: message || "No second badge has been queued.", extra: "" }
+  }[kind];
+
+  box.className = "result is-" + kind;
+  box.innerHTML = `
+    <div class="ring">${parts.icon}</div>
+    <div class="tag">${parts.tag}</div>
+    <div class="who">${name}</div>
+    <div class="said">${parts.said}</div>
+    ${a.job_id ? `<div class="jobref">Print job ${a.job_id}</div>` : ""}
+    ${parts.extra}
+    <button class="ghost" onclick="hideResult()">Close</button>`;
+
+  document.getElementById("overlay").classList.add("on");
+
+  // Settled states clear themselves so the kiosk returns to the roster.
+  if (kind !== "printing") dismissTimer = setTimeout(hideResult, 5000);
+}
+
+function hideResult() {
+  clearTimeout(dismissTimer);
+  watching = null;
+  document.getElementById("overlay").classList.remove("on");
+}
+
 async function resetAll() {
   await fetch("/api/reset", { method: "POST" });
   previous = {};
+  hideResult();
   log("Demo reset - all attendees are not checked in.");
   await load();
 }
@@ -220,8 +433,6 @@ function log(message, kind) {
   box.prepend(line);
 }
 
-// The kiosk no longer learns the outcome from its own request, so it polls
-// for state the webhook has since changed.
 load();
 setInterval(load, 1000);
 </script>
