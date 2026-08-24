@@ -16,7 +16,7 @@ pivot without losing what already worked.
 | 1 | Learning & Blocker Journal | `LEARNING_JOURNAL.md` |
 | 2 | Pivoted deliverable — Solstice Events check-in kiosk | `solstice/` |
 | 2 | Scope Delta Analysis | `solstice/SCOPE_DELTA_ANALYSIS.md` |
-| 3 | Adaptability Index | **Not in this repository.** Submitted directly to the instructor — the sprint rules require it to stay confidential, and this repository is public. |
+
 
 Prior work from earlier in the sprint, retained as evidence: a Northstar Retail
 inventory sync service that polls a warehouse feed and caches stock
