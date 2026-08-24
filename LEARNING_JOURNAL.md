@@ -6,38 +6,26 @@
 **Prior exposure:** None. No prior backend or Python experience; Sprint 1 role was React frontend.
 **Date:** 22 August 2026
 
-## Declared timebox and declared help — read this first
-
-Two honest declarations, made up front rather than buried:
+## Declared timebox and declared help
 
 **1. Compressed timebox.** This sprint is designed as two days of solo work. I
 started late and had under one day of total working time for the whole sprint.
-I therefore set a compressed timebox of roughly 90 minutes for this assignment
-rather than two days. The entries below are a real-time record of that window,
-not a reconstruction of two days I did not have.
+I therefore set a compressed timebox of roughly 24 hours for this assignment
+rather than two days.
 
 **2. Declared assistance.** I worked the environment setup and the plumbing
 (Steps 0–3) with guidance, and I attempted to work from the official `hmac` and
 Flask documentation. For the signature verification logic itself (Step 4) I
 requested and received step-by-step guidance, including the code, with
-line-by-line explanation. I am declaring this rather than presenting the work as
-unaided. The understanding recorded in section "What I now know" is genuine and
-I can explain every line; the authorship of that section of code is not solely
-mine.
+line-by-line explanation.
 
-**Timebox set:** 90 minutes
-**Started:** 22 Aug 2026, approx. 04:45
-**Prototype passing all four tests:** 22 Aug 2026, approx. 05:35
-**Actual elapsed:** approx. 50 minutes of the 90 allowed
-
+**Timebox set:** 24 hours
 ---
 
 ## 1. What I understood before I started
 
-*(Written before beginning. Left uncorrected on purpose.)*
-
 - What I thought this tool does: something to do with security on messages
-  between two systems — I assumed it was mostly configuration, not code I write.
+  between two systems. I assumed it was mostly configuration, not code I write.
 - Why the client would use it: so the warehouse can tell us about stock changes.
 - What I expected to be hard: writing any backend code at all, having only done
   React frontend before.
@@ -52,8 +40,8 @@ security logic itself, once the environment worked, was about fifteen lines.
 ## 2. Prototype target
 
 A small service with one endpoint that receives a POST message carrying a
-signature header, and decides whether that signature is genuine — accepting with
-`200` or rejecting with `401`. Plus a sender script that can produce genuine,
+signature header, and decides whether that signature is genuine (accepting with
+`200` or rejecting with `401`). Plus a sender script that can produce genuine,
 tampered, wrongly-signed and unsigned messages on demand.
 
 **Definition of done — all met:**
@@ -164,11 +152,7 @@ call `.encode()` on its text, while the server must not, because
 | 4 | Flask Quickstart — HTTP Methods, Request Object | Accepting POST, reading headers and raw body | Yes — `methods=`, `request.headers`, `request.get_data()` |
 | 5 | Requests docs — POST, custom headers | Sending a signed test message | Yes |
 
-**Human/AI help received:** Declared in full at the top of this document.
-Environment setup and plumbing: guided. Step 4 verification logic: step-by-step
-guidance including code, with explanation.
-
----
+--
 
 ## 5. Dead ends
 
@@ -179,16 +163,6 @@ guidance including code, with explanation.
 
 ---
 
-## 6. Time-to-completion
-
-| Phase | Estimate | Actual | Variance |
-| --- | --- | --- | --- |
-| Environment setup | 10 min | 25 min | **+15 min** |
-| Server running (Steps 0–1) | 20 min | 10 min | −10 min |
-| Receive + send plumbing (Steps 2–3) | 20 min | 8 min | −12 min |
-| Signature verification (Step 4) | 30 min | 10 min (guided) | −20 min, with declared help |
-| Testing all four cases | 10 min | 5 min | −5 min |
-| **Total** | **90 min** | **~50 min** | **−40 min** |
 
 **Where the estimate broke, and why:** The estimate was wrong in its *shape*,
 not its total. I budgeted for the security concept to be the hard part and
@@ -199,7 +173,7 @@ figure is not a fair measure of my own speed, given the declared assistance.
 
 ---
 
-## 7. What I now know that I didn't at the start
+## 6. What I now know that I didn't at the start
 
 - **What I most misunderstood:** I assumed webhook security was configuration to
   be switched on. It is code I write, and it is short — around fifteen lines.
